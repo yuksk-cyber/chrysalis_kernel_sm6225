@@ -467,7 +467,8 @@ static void halt_spmi_pmic_arbiter(void)
 static void msm_restart_prepare(const char *cmd)
 {
 	bool need_warm_reset = false;
-	/* Write download mode flags if restart_mode says so
+	bool bpfloader_failure = cmd && strstr(cmd, "bpfloader-failed");
+	/* Write download mode flags if we're panic'ing
 	 * Kill download mode if master-kill switch is set
 	 */
 
@@ -503,7 +504,13 @@ static void msm_restart_prepare(const char *cmd)
 	}
 
 	if (cmd != NULL) {
-		if (!strncmp(cmd, "bootloader", 10)) {
+		if (bpfloader_failure) {
+			/* Android's bpfloader failure reboot must not loop normal boot. */
+			pr_crit("bpfloader failure: rebooting into recovery (%s)\n", cmd);
+			qpnp_pon_set_restart_reason(
+				PON_RESTART_REASON_RECOVERY);
+			__raw_writel(0x77665502, restart_reason);
+		} else if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
 			__raw_writel(0x77665500, restart_reason);
