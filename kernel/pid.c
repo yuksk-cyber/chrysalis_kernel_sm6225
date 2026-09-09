@@ -454,6 +454,50 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 {
 	return idr_get_next(&ns->idr, &nr);
 }
+/**
+ * pidfd_pid - Return the struct pid backing a pidfd
+ * @file: pidfd file
+ *
+ * Return: On success, returns a reference to the struct pid.
+ *         On error, negative errno is returned in the pointer.
+ */
+struct pid *pidfd_pid(const struct file *file)
+{
+	if (file->f_op != &pidfd_fops)
+		return ERR_PTR(-EBADF);
+
+	return file->private_data;
+}
+
+/**
+ * pidfd_get_pid - Get a struct pid from a pidfd file descriptor.
+ * @fd: pidfd file descriptor
+ * @flags: on success, is set to the pidfd's file->f_flags
+ *
+ * This creates a new reference to the pid backing the pidfd.
+ *
+ * Return: On success, a reference to the pid is returned.
+ *         On error, negative errno is returned in the pointer.
+ */
+struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
+{
+	struct fd f;
+	struct pid *pid;
+
+	f = fdget(fd);
+	if (!f.file)
+		return ERR_PTR(-EBADF);
+
+	pid = pidfd_pid(f.file);
+	if (!IS_ERR(pid)) {
+		get_pid(pid);
+		if (flags)
+			*flags = f.file->f_flags;
+	}
+
+	fdput(f);
+	return pid;
+}
 
 /**
  * pidfd_create() - Create a new pid file descriptor.

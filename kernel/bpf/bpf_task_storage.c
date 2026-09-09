@@ -207,7 +207,7 @@ BPF_CALL_4(bpf_task_storage_get, struct bpf_map *, map, struct task_struct *,
 		return (unsigned long)sdata->data;
 
 	/* Only allocate new storage while the task is still refcounted. */
-	if (atomic_read(&task->usage) &&
+	if (refcount_read(&task->usage) &&
 	    (flags & BPF_LOCAL_STORAGE_GET_F_CREATE)) {
 		sdata = bpf_local_storage_update(
 			task, (struct bpf_local_storage_map *)map, value,
