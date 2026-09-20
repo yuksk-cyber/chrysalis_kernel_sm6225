@@ -1218,29 +1218,24 @@ DECLARE_RWSEM(uts_sem);
  */
 static int override_release(char __user *release, size_t len)
 {
-    char fake[65];
-    const char *real_suffix = UTS_RELEASE;
-    size_t flen;
+	char fake[65];
+	const char *real_suffix = UTS_RELEASE;
+	size_t flen;
 
-    while (*real_suffix && *real_suffix != '-') {
-        real_suffix++;
-    }
+	while (*real_suffix && *real_suffix != '-') {
+		real_suffix++;
+	}
 
-    snprintf(fake, sizeof(fake), "5.15.136%s", real_suffix);
-    flen = strlen(fake) + 1;
+	snprintf(fake, sizeof(fake), "5.15.136%s", real_suffix);
+	flen = strlen(fake) + 1;
 
+	if (len < flen)
+		return -EINVAL;
 
-    if (strncmp(current->comm, "bpfloader", 9) == 0 || 
-        strncmp(current->comm, "netbpfload", 10) == 0 ||
-        strncmp(current->comm, "netd", 4) == 0) {  
-
-        if (len < flen)
-            return -EINVAL;
-
-        if (copy_to_user(release, fake, flen))
-            return -EFAULT;
-        return 0;
-    }
+	if (copy_to_user(release, fake, flen))
+		return -EFAULT;
+	return 0;
+}
 
     {
         const char *real = UTS_RELEASE;
