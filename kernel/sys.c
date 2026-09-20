@@ -1237,20 +1237,6 @@ static int override_release(char __user *release, size_t len)
 	return 0;
 }
 
-    {
-        const char *real = UTS_RELEASE;
-        size_t rlen = strlen(real) + 1;
-
-        if (len < rlen)
-            return -EINVAL;
-
-        if (copy_to_user(release, real, rlen))
-            return -EFAULT;
-
-        return 0;
-    }
-}
-
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 extern struct static_key_false susfs_is_uname_spoof_buffer_set;
 extern void susfs_spoof_uname(struct new_utsname* tmp);
